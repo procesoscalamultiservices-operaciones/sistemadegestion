@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CALA · Sistema de Pagos 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --nav: #1C2D62;
+      --org: #CC4D18;
+      --nav-light: #EEF2FF;
+      --nav-border: #D0D6F0;
+      --org-dark: #8B2A06;
+      --org-text: #7D2A0A;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      background: #F0F2F5;
+      color: #1A1A1A;
+      font-size: 14px;
+      margin: 0;
+      padding: 0;
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    }
+
+    /* ── TOP BAR ── */
+    .top-bar {
+      background: #fff;
+      border-bottom: 4px solid var(--org);
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-justify-content: space-between;
+      justify-content: space-between;
+      padding: 8px 14px;
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+    .top-right {
+      text-align: right;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.5;
+    }
+    .top-right strong { display: block; color: var(--nav); font-size: 13px; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: -webkit-flex;
+      display: flex;
+      background: var(--nav);
+      padding: 0 10px;
+      gap: 2px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab-btn {
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255,255,255,.6);
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 11px 14px 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      white-space: nowrap;
+      outline: none;
+    }
+    .tab-btn.active { color: #fff; border-bottom-color: var(--org); }
+
+    /* ── PANES ── */
+    .tab-pane { display: none; padding: 12px; }
+    .tab-pane.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    .card-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 1.5px;
+      color: var(--nav);
+      margin: 0 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--nav-border);
+    }
+
+    /* ── FORM GRID ── */
+    .fg {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-wrap: wrap;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .fg .f1 { -webkit-flex: 1 1 140px; flex: 1 1 140px; }
+    .fg .f2 { -webkit-flex: 2 1 180px; flex: 2 1 180px; position: relative; }
+    .fg .fa { width: 100%; -webkit-flex: 0 0 100%; flex: 0 0 100%; }
+    label.lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 4px;
+      letter-spacing: .3px;
+    }
+
+    /* ── INPUTS (16px prevents iOS auto-zoom) ── */
+    input[type=text],
+    input[type=date],
+    select {
+      width: 100%;
+      padding: 9px 11px;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 16px;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 7px;
+      background: #fff;
+      color: #1A1A1A;
+      -webkit-appearance: none;
+      appearance: none;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type=text]:focus,
+    input[type=date]:focus,
+    select:focus { border-color: var(--nav); }
+
+    input[type=number] {
+      width: 100%;
+      padding: 9px 11px;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 16px;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 7px;
+      background: #fff;
+      color: #1A1A1A;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+      appearance: textfield;
+      outline: none;
+      transition: border-color .2s;
+      text-align: center;
+    }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number]:focus { border-color: var(--nav); }
+
+    /* ── LEVEL CARDS ── */
+    .level-row {
+      display: -webkit-flex;
+      display: flex;
+      gap: 10px;
+    }
+    .level-card {
+      -webkit-flex: 1;
+      flex: 1;
+      border: 2.5px solid #D1D5DB;
+      border-radius: 10px;
+      padding: 12px 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      text-align: center;
+      transition: border-color .2s, background .2s;
+    }
+    .level-card.sel-exp { border-color: var(--nav); background: var(--nav-light); }
+    .level-card.sel-nov { border-color: var(--org); background: #FFF4EF; }
+    .lc-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 19px;
+      letter-spacing: 2px;
+      margin-bottom: 2px;
+    }
+    .lc-title.exp { color: var(--nav); }
+    .lc-title.nov { color: var(--org); }
+    .lc-pay { font-size: 22px; font-weight: 700; color: #1A1A1A; line-height: 1.2; }
+    .lc-rate { font-size: 11px; color: #777; margin-top: 3px; }
+
+    /* ── DAY BUTTONS ── */
+    .day-row {
+      display: -webkit-flex;
+      display: flex;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    .day-btn {
+      -webkit-flex: 1;
+      flex: 1;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: #666;
+      background: #F3F4F6;
+      border: 2px solid #D1D5DB;
+      border-radius: 8px;
+      padding: 10px 2px 6px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-direction: column;
+      flex-direction: column;
+      -webkit-align-items: center;
+      align-items: center;
+      line-height: 1.2;
+      transition: all .15s;
+      outline: none;
+    }
+    .day-btn span { font-size: 9px; font-weight: 400; color: #999; }
+    .day-btn.active { background: var(--nav); border-color: var(--nav); color: #fff; }
+    .day-btn.active span { color: rgba(255,255,255,.7); }
+
+    /* ── HOURS STEPPER ── */
+    .hours-wrap {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      gap: 8px;
+    }
+    .hours-wrap input { -webkit-flex: 1; flex: 1; }
+    .step-btn {
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 22px;
+      font-weight: 300;
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      border: 1.5px solid #D1D5DB;
+      border-radius: 8px;
+      background: #F3F4F6;
+      color: var(--nav);
+      cursor: pointer;
+      touch-action: manipulation;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      outline: none;
+      line-height: 1;
+    }
+    .step-btn:active { background: var(--nav-light); }
+
+    /* ── ACTIVITIES ── */
+    .svc-wrap {
+      max-height: 300px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .act-cat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--nav);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      padding: 8px 4px 4px;
+      border-bottom: 1px solid var(--nav-border);
+      margin-bottom: 2px;
+    }
+    .act-item {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .act-item:active { background: #F3F4F6; }
+    .act-item input[type=checkbox] {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      cursor: pointer;
+      accent-color: var(--nav);
+      margin: 0;
+    }
+    .act-item label {
+      font-size: 13px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      line-height: 1.3;
+      pointer-events: none;
+    }
+
+    /* ── BONUS ── */
+    .chk-row {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .chk-row input[type=checkbox] {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      cursor: pointer;
+      margin: 0;
+      accent-color: var(--org);
+    }
+    .chk-row label { font-size: 14px; cursor: pointer; }
+
+    /* ── ITIN ── */
+    .itin-row {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-align-items: center;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0 0;
+    }
+    .itin-row input[type=checkbox] {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      cursor: pointer;
+      accent-color: var(--nav);
+      margin: 0;
+    }
+    .itin-row label { font-size: 13px; cursor: pointer; }
+
+    /* ── RESULTS ── */
+    .result-box {
+      background: var(--nav);
+      color: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .result-header {
+      display: -webkit-flex;
+      display: flex;
+      -webkit-justify-content: space-between;
+      justify-content: space-between;
+      -webkit-align-items: flex-start;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .result-label { font-size: 11px; opacity: .7; margin-bottom: 4px; letter-spacing: .5px; }
+    .result-total {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 50px;
+      letter-spacing: 2px;
+      color: var(--org);
+      line-height: 1;
+    }
+    .result-meta { text-align: right; font-size: 12px; opacity: .8; line-height: 1.7; }
+    .sub-grid {
+      display: -webkit-flex;
+      display: flex;
+      gap: 8px;
+      -webkit-flex-wrap: wrap;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .sub-box {
+      -webkit-flex: 1 1 80px;
+      flex: 1 1 80px;
+      background: rgba(255,255,255,.1);
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .sb-label { font-size: 10px; opacity: .7; }
+    .sb-val { font-size: 17px; font-weight: 700; }
+    .result-warn {
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .warn-ok { background: rgba(100,220,110,.15); color: #9EE7A0; }
+    .warn-bad { background: rgba(255,80,50,.18); color: #FFB3A7; }
+
+    /* ── BUTTONS ── */
+    .action-row {
+      display: -webkit-flex;
+      display: flex;
+      gap: 8px;
+      -webkit-flex-wrap: wrap;
+      flex-wrap: wrap;
+    }
+    .btn {
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-flex: 1 1 110px;
+      flex: 1 1 110px;
+      outline: none;
+      transition: opacity .2s;
+    }
+    .btn:active { opacity: .8; }
+    .btn-nav { background: var(--nav); color: #fff; }
+    .btn-org { background: var(--org); color: #fff; }
+    .btn-out { background: #fff; color: var(--nav); border: 1.5px solid var(--nav); }
+
+    /* ── YTD ALERT ── */
+    #ytdAlert {
+      display: none;
+      background: #FFF8E1;
+      border: 1px solid #FFD54F;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      color: #7D5A00;
+      margin-top: 10px;
+    }
+    #ytdAlert.show { display: block; }
+
+    /* ── WORKER SUGGESTIONS ── */
+    #workerSuggest {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 2px);
+      z-index: 200;
+      background: #fff;
+      border: 1.5px solid var(--nav);
+      border-radius: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    }
+    .ws-item {
+      padding: 11px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #F0F0F0;
+      touch-action: manipulation;
+    }
+    .ws-item:last-child { border-bottom: none; }
+    .ws-item:active { background: var(--nav-light); }
+
+    /* ── BADGE ── */
+    .badge {
+      background: var(--org);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 6px;
+      margin-left: 4px;
+    }
+
+    /* ── CHIP ── */
+    .chip {
+      display: inline-block;
+      background: var(--nav-light);
+      color: var(--nav);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .chip.nov { background: #FFF0EA; color: var(--org-text); }
+
+    /* ── HISTORY TABLE ── */
+    .hist-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .hist-table th {
+      background: var(--nav);
+      color: #fff;
+      padding: 8px 9px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .hist-table td {
+      padding: 8px 9px;
+      border-bottom: 1px solid #F0F0F0;
+      vertical-align: middle;
+    }
+    .hist-table tr:last-child td { border-bottom: none; }
+
+    /* ── CRITERIA TABLE ── */
+    .crit-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .crit-table th {
+      background: var(--nav-light);
+      color: var(--nav);
+      font-weight: 700;
+      padding: 9px 10px;
+      text-align: left;
+      border: 1px solid var(--nav-border);
+    }
+    .crit-table td { padding: 9px 10px; border: 1px solid var(--nav-border); vertical-align: top; }
+    .crit-table .exp-col { color: var(--nav); font-weight: 600; }
+    .crit-table .nov-col { color: var(--org-text); font-weight: 600; }
+
+    /* ── Q CARDS ── */
+    .qcard {
+      background: var(--nav-light);
+      border: 1px solid var(--nav-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .qcard h4 { margin: 0 0 10px; font-size: 13px; color: var(--nav); font-weight: 600; }
+    .qf-btns { display: -webkit-flex; display: flex; gap: 8px; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+    .qf-btn {
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border: 1.5px solid var(--nav-border);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--nav);
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
+    }
+    .qf-btn:active { opacity: .8; }
+    .qf-btn.sel-exp { background: var(--nav); color: #fff; border-color: var(--nav); }
+    .qf-btn.sel-nov { background: var(--org); color: #fff; border-color: var(--org); }
+
+    /* ── FILTER ROW ── */
+    .filter-row { display: -webkit-flex; display: flex; gap: 8px; margin-bottom: 12px; }
+    .filter-row input { -webkit-flex: 1; flex: 1; }
+
+    /* ── EMPTY ── */
+    .empty-state { text-align: center; color: #AAA; padding: 32px; font-size: 13px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+      -webkit-transform: translateX(-50%) translateY(8px);
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(26,26,26,.92);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s, -webkit-transform .25s, transform .25s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; -webkit-transform: translateX(-50%) translateY(0); transform: translateX(-50%) translateY(0); }
+
+    /* ── PRINT ── */
+    #receipt { display: none; }
+    @media print {
+      body > *:not(#receipt) { display: none !important; }
+      #receipt { display: block !important; }
+      .rp { max-width: 400px; margin: 0 auto; padding: 24px; font-size: 13px; font-family: Arial, sans-serif; }
+      .rp h2 { font-size: 28px; letter-spacing: 2px; color: #1C2D62; margin: 0 0 2px; }
+      .rp .r-sub { font-size: 11px; color: #666; margin-bottom: 16px; }
+      .rp .r-line { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 12px; }
+      .rp .r-sect { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .5px; padding: 8px 0 4px; }
+      .rp .r-total { font-size: 20px; font-weight: 700; color: #1C2D62; padding: 10px 0 0; display: flex; justify-content: space-between; }
+      .rp .r-foot { margin-top: 20px; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <svg viewBox="0 0 285 104" xmlns="http://www.w3.org/2000/svg" height="58" style="display:block;flex-shrink:0">
+    <path fill="#CC4D18" fill-rule="evenodd" d="M 88.79,42.49 L 97.61,46.00 L 97.61,58.00 L 88.79,61.51 L 84.74,71.29 L 88.49,80.00 L 80.00,88.49 L 71.29,84.74 L 61.51,88.79 L 58.00,97.61 L 46.00,97.61 L 42.49,88.79 L 32.71,84.74 L 24.00,88.49 L 15.51,80.00 L 19.26,71.29 L 15.21,61.51 L 6.39,58.00 L 6.39,46.00 L 15.21,42.49 L 19.26,32.71 L 15.51,24.00 L 24.00,15.51 L 32.71,19.26 L 42.49,15.21 L 46.00,6.39 L 58.00,6.39 L 61.51,15.21 L 71.29,19.26 L 80.00,15.51 L 88.49,24.00 L 84.74,32.71 Z M 71.00,52.00 L 70.35,47.08 L 68.45,42.50 L 65.44,38.56 L 61.50,35.55 L 56.92,33.65 L 52.00,33.00 L 47.08,33.65 L 42.50,35.55 L 38.56,38.56 L 35.55,42.50 L 33.65,47.08 L 33.00,52.00 L 33.65,56.92 L 35.55,61.50 L 38.56,65.44 L 42.50,68.45 L 47.08,70.35 L 52.00,71.00 L 56.92,70.35 L 61.50,68.45 L 65.44,65.44 L 68.45,61.50 L 70.35,56.92 Z"/>
+    <path fill="none" stroke="#CC4D18" stroke-width="3" stroke-linecap="round" d="M 49.60,58.57 A 7,7 0 0,1 49.60,45.43"/>
+    <path fill="none" stroke="#CC4D18" stroke-width="3" stroke-linecap="round" d="M 47.88,63.28 A 12,12 0 0,1 47.88,40.72"/>
+    <path fill="none" stroke="#CC4D18" stroke-width="3" stroke-linecap="round" d="M 46.17,67.99 A 17,17 0 0,1 46.17,36.01"/>
+    <text x="110" y="70" font-family="Bebas Neue,sans-serif" font-size="60" fill="#1C2D62" letter-spacing="2">CALA</text>
+    <text x="113" y="84" font-family="Bebas Neue,sans-serif" font-size="12" fill="#1C2D62" letter-spacing="5.5">MULTISERVICES</text>
+    <text x="113" y="99" font-family="Bebas Neue,sans-serif" font-size="13" fill="#CC4D18" letter-spacing="2.5">CONSTRUCTION INC.</text>
+  </svg>
+  <div class="top-right">
+    <strong>Sistema de Pagos · 2026</strong>
+    Mín. LA City: $18.42/hr<br>Experto $250 · Novato $160/día
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button type="button" class="tab-btn active" id="tb-calc" onclick="showTab('calc')">Calcular</button>
+  <button type="button" class="tab-btn" id="tb-hist" onclick="showTab('hist')">Historial <span class="badge" id="badge">0</span></button>
+  <button type="button" class="tab-btn" id="tb-crit" onclick="showTab('crit')">Criterios de Nivel</button>
+</div>
+
+<!-- ══════════════════════ TAB CALCULAR ══════════════════════ -->
+<div class="tab-pane active" id="tab-calc">
+
+  <!-- Trabajador -->
+  <div class="card">
+    <div class="card-title">Información del Ayudante</div>
+    <div class="fg">
+      <div class="f2">
+        <label class="lbl" for="workerName">Nombre completo</label>
+        <input type="text" id="workerName" placeholder="Nombre del trabajador" autocomplete="off" autocorrect="off" spellcheck="false" oninput="onWorkerInput()" onchange="calcAll()" onblur="hideWorkerSuggest()">
+        <div id="workerSuggest"></div>
+      </div>
+      <div class="f1">
+        <label class="lbl" for="workDate">Fecha</label>
+        <input type="date" id="workDate" onchange="calcAll()">
+      </div>
+    </div>
+    <div class="itin-row">
+      <input type="checkbox" id="itinChk" onchange="calcAll()">
+      <label for="itinChk">Tiene ITIN / SSN registrado</label>
+    </div>
+    <div id="ytdAlert"></div>
+  </div>
+
+  <!-- Nivel -->
+  <div class="card">
+    <div class="card-title">Nivel del Ayudante</div>
+    <div class="level-row">
+      <div class="level-card sel-exp" id="cardExp" onclick="setLevel('experto')">
+        <div class="lc-title exp">EXPERTO</div>
+        <div class="lc-pay">$250<span style="font-size:13px;font-weight:400">/día</span></div>
+        <div class="lc-rate">~$29.41/hr · máx 8.5h</div>
+      </div>
+      <div class="level-card" id="cardNov" onclick="setLevel('novato')">
+        <div class="lc-title nov">NOVATO</div>
+        <div class="lc-pay">$160<span style="font-size:13px;font-weight:400">/día</span></div>
+        <div class="lc-rate">~$18.82/hr · máx 8.5h</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Días y Horas -->
+  <div class="card">
+    <div class="card-title">Días y Horas Trabajadas</div>
+    <label class="lbl" style="margin-bottom:8px">Días trabajados</label>
+    <div class="day-row">
+      <button type="button" class="day-btn active" id="d1" onclick="setDays(1)">1<span>día</span></button>
+      <button type="button" class="day-btn" id="d2" onclick="setDays(2)">2<span>días</span></button>
+      <button type="button" class="day-btn" id="d3" onclick="setDays(3)">3<span>días</span></button>
+      <button type="button" class="day-btn" id="d4" onclick="setDays(4)">4<span>días</span></button>
+      <button type="button" class="day-btn" id="d5" onclick="setDays(5)">5<span>días</span></button>
+    </div>
+    <label class="lbl" for="hoursPerDay">Horas por día <span style="font-weight:300;color:#999">(registro interno — no afecta pago)</span></label>
+    <div class="hours-wrap">
+      <button type="button" class="step-btn" onclick="stepHours(-0.5)">−</button>
+      <input type="number" id="hoursPerDay" value="8.5" min="0.5" max="8.5" step="0.5" inputmode="decimal" readonly oninput="clampHours();calcAll()" onchange="clampHours();calcAll()">
+      <button type="button" class="step-btn" onclick="stepHours(0.5)">+</button>
+    </div>
+  </div>
+
+  <!-- Actividades -->
+  <div class="card">
+    <div class="card-title">Servicios Realizados</div>
+    <div class="svc-wrap" id="actList"></div>
+  </div>
+
+  <!-- Bono -->
+  <div class="card">
+    <div class="card-title">Bono de Desempeño</div>
+    <div class="chk-row">
+      <input type="checkbox" id="bonusChk" onchange="toggleBonus()">
+      <label for="bonusChk">Otorgar bono adicional por desempeño</label>
+    </div>
+    <div id="bonusWrap" style="display:none;margin-top:12px">
+      <label class="lbl" for="bonusVal">Monto del bono ($)</label>
+      <input type="number" id="bonusVal" value="0" min="0" step="5" inputmode="decimal" style="max-width:180px;text-align:left" oninput="calcAll()" onchange="calcAll()">
+    </div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="result-box">
+    <div class="result-header">
+      <div>
+        <div class="result-label">TOTAL A PAGAR</div>
+        <div class="result-total" id="rTotal">$0.00</div>
+      </div>
+      <div class="result-meta">
+        <div id="rLevel">Experto</div>
+        <div id="rDaysHrs">1 día · 8.5 hrs</div>
+      </div>
+    </div>
+    <div class="sub-grid">
+      <div class="sub-box"><div class="sb-label">Pago base</div><div class="sb-val" id="rDayPay">$250.00</div></div>
+      <div class="sub-box"><div class="sb-label">Bono</div><div class="sb-val" id="rBonus">—</div></div>
+      <div class="sub-box"><div class="sb-label">Hrs totales</div><div class="sb-val" id="rHrs">8.5</div></div>
+    </div>
+    <div class="result-warn warn-ok" id="rWarn"></div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="action-row" style="margin-bottom:20px">
+    <button type="button" class="btn btn-nav" onclick="savePay()">💾 Guardar</button>
+    <button type="button" class="btn btn-org" onclick="doReceipt()">🧾 Recibo</button>
+    <button type="button" class="btn btn-out" onclick="exportXLS()">📊 Excel</button>
+  </div>
+
+</div>
+
+<!-- ══════════════════════ TAB HISTORIAL ══════════════════════ -->
+<div class="tab-pane" id="tab-hist">
+  <div class="card">
+    <div class="card-title">Historial de Pagos · 2026</div>
+    <div class="filter-row">
+      <input type="text" id="histFilter" placeholder="Buscar por nombre..." oninput="renderHist()" onchange="renderHist()">
+      <button type="button" class="btn btn-out" style="-webkit-flex:0 0 auto;flex:0 0 auto;font-size:12px;padding:9px 12px" onclick="exportXLS()">📊 Excel</button>
+    </div>
+    <div class="hist-wrap">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Nivel</th>
+            <th>Días</th>
+            <th>Total</th>
+            <th>ITIN</th>
+            <th>YTD</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="histEmpty">No hay registros aún.</div>
+    <div id="histSummary" style="margin-top:10px;font-size:12px;color:#666"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ TAB CRITERIOS ══════════════════════ -->
+<div class="tab-pane" id="tab-crit">
+
+  <div class="card">
+    <div class="card-title">Experto vs Novato — Tabla de Criterios</div>
+    <table class="crit-table">
+      <thead>
+        <tr>
+          <th>Criterio</th>
+          <th class="exp-col">EXPERTO · $250/día</th>
+          <th class="nov-col">NOVATO · $160/día</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Experiencia</td>
+          <td class="exp-col">+2 años en el oficio</td>
+          <td class="nov-col">Menos de 1 año o aprendiendo</td>
+        </tr>
+        <tr>
+          <td>Trabajo independiente</td>
+          <td class="exp-col">Trabaja solo sin supervisión</td>
+          <td class="nov-col">Necesita dirección constante</td>
+        </tr>
+        <tr>
+          <td>Herramientas</td>
+          <td class="exp-col">Domina todas las herramientas</td>
+          <td class="nov-col">Uso limitado o en aprendizaje</td>
+        </tr>
+        <tr>
+          <td>Calidad</td>
+          <td class="exp-col">Acabado profesional, sin retrabajo</td>
+          <td class="nov-col">Requiere revisión y correcciones</td>
+        </tr>
+        <tr>
+          <td>Velocidad</td>
+          <td class="exp-col">Cumple tiempos estimados</td>
+          <td class="nov-col">Más lento, en proceso de aprendizaje</td>
+        </tr>
+        <tr>
+          <td>Iniciativa</td>
+          <td class="exp-col">Resuelve problemas por su cuenta</td>
+          <td class="nov-col">Pregunta antes de tomar decisiones</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">3 Preguntas Rápidas de Campo</div>
+    <p style="font-size:12px;color:#666;margin:0 0 12px">Responde antes de asignar el nivel:</p>
+
+    <div class="qcard">
+      <h4>1. ¿Puede ejecutar la tarea completa sin que le expliques cada paso?</h4>
+      <div class="qf-btns">
+        <button type="button" class="qf-btn" id="q1y" onclick="setQ(1,'y')">✓ Sí, sin problema</button>
+        <button type="button" class="qf-btn" id="q1n" onclick="setQ(1,'n')">✗ No, necesita guía</button>
+      </div>
+    </div>
+    <div class="qcard">
+      <h4>2. ¿Ha hecho este trabajo antes con buen resultado?</h4>
+      <div class="qf-btns">
+        <button type="button" class="qf-btn" id="q2y" onclick="setQ(2,'y')">✓ Sí, tiene experiencia</button>
+        <button type="button" class="qf-btn" id="q2n" onclick="setQ(2,'n')">✗ No, es nuevo en esto</button>
+      </div>
+    </div>
+    <div class="qcard">
+      <h4>3. ¿Usa las herramientas de forma segura y eficiente?</h4>
+      <div class="qf-btns">
+        <button type="button" class="qf-btn" id="q3y" onclick="setQ(3,'y')">✓ Sí, buen manejo</button>
+        <button type="button" class="qf-btn" id="q3n" onclick="setQ(3,'n')">✗ No, aún aprendiendo</button>
+      </div>
+    </div>
+
+    <div id="criResult" style="display:none;margin-top:12px;border-radius:8px;padding:14px;font-size:15px;font-weight:700;text-align:center"></div>
+  </div>
+
+</div>
+
+<!-- RECEIPT PRINT -->
+<div id="receipt"></div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   CALA Payroll · v3.0 · iOS-compatible
+   Fixes: no optional chaining, font-size 16px, Blob XLS,
+          step buttons for hours, custom suggest dropdown,
+          localStorage try/catch, type=button on all btns
+───────────────────────────────────────────────────────────── */
+'use strict';
+
+var LEVELS = {
+  experto: { cap: 250, label: 'Experto', rate: 29.41 },
+  novato:  { cap: 160, label: 'Novato',  rate: 18.82 }
+};
+var MIN_WAGE    = 18.42;
+var KEY         = 'cala_v2';
+var THRESH_1099 = 2000;
+
+var currentLevel = 'experto';
+var currentDays  = 1;
+var lastCalc     = {};
+var qAns         = {};
+var suggestOpen  = false;
+var toastTimer   = null;
+
+var SVCDATA = [
+  { cat: 'Drywall Repair & Painting', tasks: [
+    'Demolición de drywall / teardown',
+    'Instalación drywall (hanging)',
+    'Taping & mudding (masilla)',
+    'Textura — knockdown / orange peel',
+    'Pintura — preparación y lijado',
+    'Pintura — aplicación (primario + 2 manos)',
+    'Pintura — trim y detalles'
+  ]},
+  { cat: 'Commercial Maintenance Services', tasks: [
+    'Mantenimiento general (restaurantes)',
+    'Mantenimiento preventivo / inspección',
+    'Reparaciones menores en propiedad',
+    'Limpieza post-construcción',
+    'Contrato mensual (por hora trabajada)'
+  ]},
+  { cat: 'Plumbing & Drain Repairs', tasks: [
+    'Limpieza de drenajes (drain cleaning)',
+    'Reemplazo de faucets / fixtures',
+    'Reparación de fugas menores',
+    'Caulking / sellado de tuberías'
+  ]},
+  { cat: 'Roof Leak & Spanish Tile', tasks: [
+    'Reparación de filtraciones / patch',
+    'Reemplazo teja española (clay tile)',
+    'Sellado y caulking de techo',
+    'Limpieza de canaletas / gutters'
+  ]},
+  { cat: 'Pressure Washing & Cleaning', tasks: [
+    'Pressure washing — aceras y entradas',
+    'Pressure washing — fachadas',
+    'Limpieza exterior comercial',
+    'Lavado post-construcción'
+  ]},
+  { cat: 'Handyman & Property Maintenance', tasks: [
+    'Reparaciones generales (handyman)',
+    'Carpintería menor — puertas y ventanas',
+    'Caulking / weatherstripping',
+    'Property walk-through (inspección)',
+    'Reparación de cercas / gates'
+  ]}
+];
+
+/* ── STORAGE (safe for iOS private browsing) ── */
+function getPays() {
+  try { return JSON.parse(localStorage.getItem(KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function setPays(arr) {
+  try { localStorage.setItem(KEY, JSON.stringify(arr)); }
+  catch (e) { showToast('⚠ Modo privado: historial no guardado'); }
+}
+function addPay(rec) {
+  var arr = getPays();
+  arr.unshift(rec);
+  setPays(arr);
+}
+function delPay(id) {
+  setPays(getPays().filter(function(p) { return p.id !== id; }));
+}
+
+/* ── TABS ── */
+function showTab(name) {
+  var panes = ['calc','hist','crit'];
+  for (var i = 0; i < panes.length; i++) {
+    var pane = document.getElementById('tab-' + panes[i]);
+    var btn  = document.getElementById('tb-' + panes[i]);
+    if (pane) pane.className = 'tab-pane' + (panes[i] === name ? ' active' : '');
+    if (btn)  btn.className  = 'tab-btn'   + (panes[i] === name ? ' active' : '');
+  }
+  if (name === 'hist') renderHist();
+}
+
+/* ── DATE ── */
+function isoToday() {
+  var d = new Date();
+  var mm = d.getMonth() + 1;
+  var dd = d.getDate();
+  return d.getFullYear() + '-' + (mm < 10 ? '0' + mm : mm) + '-' + (dd < 10 ? '0' + dd : dd);
+}
+function fmtDate(s) {
+  if (!s) return '';
+  var p = s.split('-');
+  if (p.length < 3) return s;
+  return p[1] + '/' + p[2] + '/' + p[0];
+}
+
+/* ── LEVEL ── */
+function setLevel(lv) {
+  currentLevel = lv;
+  var ce = document.getElementById('cardExp');
+  var cn = document.getElementById('cardNov');
+  if (ce) ce.className = 'level-card' + (lv === 'experto' ? ' sel-exp' : '');
+  if (cn) cn.className = 'level-card' + (lv === 'novato'  ? ' sel-nov' : '');
+  calcAll();
+}
+
+/* ── DAYS ── */
+function setDays(n) {
+  currentDays = n;
+  for (var i = 1; i <= 5; i++) {
+    var btn = document.getElementById('d' + i);
+    if (btn) btn.className = 'day-btn' + (i === n ? ' active' : '');
+  }
+  calcAll();
+}
+
+/* ── HOURS (stepper buttons — no manual decimal input needed) ── */
+function getHours() {
+  var el = document.getElementById('hoursPerDay');
+  if (!el) return 8.5;
+  var v = parseFloat(el.value);
+  if (isNaN(v) || v < 0.5) v = 0.5;
+  if (v > 8.5) v = 8.5;
+  return Math.round(v * 2) / 2;
+}
+function clampHours() {
+  var el = document.getElementById('hoursPerDay');
+  if (!el) return;
+  el.value = getHours();
+}
+function stepHours(delta) {
+  var el = document.getElementById('hoursPerDay');
+  if (!el) return;
+  var v = getHours() + delta;
+  v = Math.round(v * 2) / 2;
+  if (v < 0.5) v = 0.5;
+  if (v > 8.5) v = 8.5;
+  el.value = v;
+  calcAll();
+}
+
+/* ── ACTIVITIES ── */
+function buildActList() {
+  var html = '';
+  for (var ci = 0; ci < SVCDATA.length; ci++) {
+    var cat = SVCDATA[ci];
+    html += '<div class="act-cat-title">' + cat.cat + '</div>';
+    for (var ti = 0; ti < cat.tasks.length; ti++) {
+      var id = 'chk_' + ci + '_' + ti;
+      html += '<div class="act-item" onclick="toggleActItem(this)">';
+      html += '<input type="checkbox" id="' + id + '" onchange="calcAll()" onclick="event.stopPropagation()">';
+      html += '<label>' + cat.tasks[ti] + '</label>';
+      html += '</div>';
+    }
+  }
+  var el = document.getElementById('actList');
+  if (el) el.innerHTML = html;
+}
+
+function toggleActItem(divEl) {
+  /* Find the checkbox inside this div and toggle it */
+  var inputs = divEl.getElementsByTagName('input');
+  for (var i = 0; i < inputs.length; i++) {
+    if (inputs[i].type === 'checkbox') {
+      inputs[i].checked = !inputs[i].checked;
+      calcAll();
+      return;
+    }
+  }
+}
+
+function getCheckedActs() {
+  var acts = [];
+  /* NOTE: No optional chaining — compatible with iOS < 13.4 */
+  for (var ci = 0; ci < SVCDATA.length; ci++) {
+    for (var ti = 0; ti < SVCDATA[ci].tasks.length; ti++) {
+      var el = document.getElementById('chk_' + ci + '_' + ti);
+      if (el && el.checked) {
+        acts.push(SVCDATA[ci].tasks[ti]);
+      }
+    }
+  }
+  return acts;
+}
+
+/* ── BONUS ── */
+function toggleBonus() {
+  var chk  = document.getElementById('bonusChk');
+  var wrap = document.getElementById('bonusWrap');
+  if (chk && wrap) wrap.style.display = chk.checked ? 'block' : 'none';
+  calcAll();
+}
+
+/* ── MAIN CALC ── */
+function calcAll() {
+  var lvl = LEVELS[currentLevel];
+  var hrs  = getHours();
+  var days = currentDays;
+  var totalHrs = days * hrs;
+  var dayPay   = days * lvl.cap;
+
+  var bonusChk = document.getElementById('bonusChk');
+  var bonusVal = document.getElementById('bonusVal');
+  var bonusOn  = bonusChk ? bonusChk.checked : false;
+  var bonusAmt = (bonusOn && bonusVal) ? (parseFloat(bonusVal.value) || 0) : 0;
+  var total    = dayPay + bonusAmt;
+  var effRate  = totalHrs > 0 ? (total / totalHrs) : 0;
+  var minOk    = effRate >= MIN_WAGE;
+
+  lastCalc = {
+    level: currentLevel, lvlLabel: lvl.label, cap: lvl.cap,
+    days: days, hrsPerDay: hrs, totalHrs: totalHrs,
+    dayPay: dayPay, bonusAmt: bonusAmt, total: total,
+    effRate: effRate, minOk: minOk
+  };
+
+  /* Update DOM */
+  setText('rTotal',   '$' + total.toFixed(2));
+  setText('rLevel',   lvl.label);
+  setText('rDaysHrs', days + (days === 1 ? ' día' : ' días') + ' · ' + totalHrs.toFixed(1) + ' hrs');
+  setText('rDayPay',  '$' + dayPay.toFixed(2));
+  setText('rBonus',   bonusAmt > 0 ? '$' + bonusAmt.toFixed(2) : '—');
+  setText('rHrs',     totalHrs.toFixed(1));
+
+  var warn = document.getElementById('rWarn');
+  if (warn) {
+    if (minOk) {
+      warn.className = 'result-warn warn-ok';
+      warn.textContent = '✓ Tasa efectiva $' + effRate.toFixed(2) + '/hr  ≥  mínimo LA City $' + MIN_WAGE + '/hr';
+    } else {
+      warn.className = 'result-warn warn-bad';
+      warn.textContent = '⚠ Tasa efectiva $' + effRate.toFixed(2) + '/hr — Por debajo del mínimo LA City';
+    }
+  }
+
+  checkYTD();
+}
+
+function setText(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+/* ── YTD ALERT ── */
+function checkYTD() {
+  var nameEl = document.getElementById('workerName');
+  var name   = nameEl ? nameEl.value.trim().toLowerCase() : '';
+  var alert  = document.getElementById('ytdAlert');
+  if (!alert) return;
+
+  if (!name) { alert.className = ''; alert.textContent = ''; return; }
+
+  var pays = getPays();
+  var ytd  = 0;
+  for (var i = 0; i < pays.length; i++) {
+    if (pays[i].worker && pays[i].worker.trim().toLowerCase() === name) {
+      ytd += pays[i].total || 0;
+    }
+  }
+
+  if (ytd > 0) {
+    var proj = ytd + (lastCalc.total || 0);
+    var msg  = '📊 YTD acumulado: $' + ytd.toFixed(2);
+    if (proj >= THRESH_1099) {
+      msg += '  ·  ⚠️ Proyectado: $' + proj.toFixed(2) + ' — Supera umbral 1099-NEC ($' + THRESH_1099 + ')';
+    } else {
+      msg += '  ·  Con este pago: $' + proj.toFixed(2);
+    }
+    alert.className   = 'show';
+    alert.textContent = msg;
+  } else {
+    alert.className   = '';
+    alert.textContent = '';
+  }
+}
+
+/* ── WORKER SUGGESTIONS (iOS-safe, no datalist) ── */
+function getWorkerNames() {
+  var pays  = getPays();
+  var names = {};
+  for (var i = 0; i < pays.length; i++) {
+    if (pays[i].worker) names[pays[i].worker] = true;
+  }
+  return Object.keys(names).sort();
+}
+
+function onWorkerInput() {
+  var input   = document.getElementById('workerName');
+  var suggest = document.getElementById('workerSuggest');
+  if (!input || !suggest) return;
+
+  var val   = input.value.trim().toLowerCase();
+  calcAll();
+
+  if (!val) { suggest.style.display = 'none'; return; }
+
+  var names = getWorkerNames().filter(function(n) {
+    return n.toLowerCase().indexOf(val) >= 0;
+  });
+
+  if (names.length === 0) { suggest.style.display = 'none'; return; }
+
+  var html = '';
+  for (var i = 0; i < names.length; i++) {
+    html += '<div class="ws-item" data-name="' + escHtml(names[i]) + '">' + escHtml(names[i]) + '</div>';
+  }
+  suggest.innerHTML    = html;
+  suggest.style.display = 'block';
+
+  /* Attach touch/click events to each suggestion item */
+  var items = suggest.getElementsByClassName('ws-item');
+  for (var j = 0; j < items.length; j++) {
+    attachSuggestItem(items[j]);
+  }
+}
+
+function attachSuggestItem(item) {
+  var name = item.getAttribute('data-name');
+  item.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    pickWorker(name);
+  });
+  item.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    pickWorker(name);
+  });
+}
+
+function pickWorker(name) {
+  var input   = document.getElementById('workerName');
+  var suggest = document.getElementById('workerSuggest');
+  if (input)   input.value        = name;
+  if (suggest) suggest.style.display = 'none';
+  calcAll();
+}
+
+function hideWorkerSuggest() {
+  /* Delay to let touchend/mousedown fire first */
+  setTimeout(function() {
+    var suggest = document.getElementById('workerSuggest');
+    if (suggest) suggest.style.display = 'none';
+  }, 250);
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── SAVE ── */
+function savePay() {
+  var nameEl = document.getElementById('workerName');
+  var name   = nameEl ? nameEl.value.trim() : '';
+  if (!name)            { showToast('⚠ Ingresa el nombre del ayudante'); return; }
+  if (!lastCalc.total)  { showToast('⚠ Calcula el pago primero'); return; }
+
+  var dateEl = document.getElementById('workDate');
+  var itinEl = document.getElementById('itinChk');
+  var rec = {
+    id:       Date.now(),
+    date:     dateEl ? (dateEl.value || isoToday()) : isoToday(),
+    worker:   name,
+    level:    lastCalc.lvlLabel,
+    cap:      lastCalc.cap,
+    days:     lastCalc.days,
+    hrsPerDay:lastCalc.hrsPerDay,
+    totalHrs: lastCalc.totalHrs,
+    dayPay:   lastCalc.dayPay,
+    bonusAmt: lastCalc.bonusAmt,
+    total:    lastCalc.total,
+    itin:     itinEl ? itinEl.checked : false,
+    acts:     getCheckedActs()
+  };
+  addPay(rec);
+  updateBadge();
+  showToast('✓ Guardado — $' + rec.total.toFixed(2));
+}
+
+/* ── RECEIPT (print) ── */
+function doReceipt() {
+  var nameEl = document.getElementById('workerName');
+  var name   = nameEl ? nameEl.value.trim() : '';
+  if (!name) { showToast('⚠ Ingresa el nombre del ayudante'); return; }
+
+  var dateEl = document.getElementById('workDate');
+  var itinEl = document.getElementById('itinChk');
+  var date   = dateEl ? fmtDate(dateEl.value) : isoToday();
+  var itin   = itinEl ? itinEl.checked : false;
+  var acts   = getCheckedActs();
+
+  var lc = lastCalc;
+  var h  = '<div class="rp">';
+  h += '<h2>CALA MULTISERVICES</h2>';
+  h += '<div class="r-sub">Recibo de Pago Interno &nbsp;·&nbsp; ' + date + '</div>';
+  h += '<div class="r-line"><span>Ayudante</span><strong>' + escHtml(name) + '</strong></div>';
+  h += '<div class="r-line"><span>Nivel</span><span>' + (lc.lvlLabel || '') + '</span></div>';
+  h += '<div class="r-line"><span>ITIN / SSN</span><span>' + (itin ? 'Sí' : 'No') + '</span></div>';
+  h += '<div class="r-line"><span>Días trabajados</span><span>' + (lc.days || 1) + '</span></div>';
+  h += '<div class="r-line"><span>Horas totales (estimado)</span><span>' + ((lc.totalHrs || 0).toFixed(1)) + '</span></div>';
+
+  if (acts.length > 0) {
+    h += '<div class="r-sect">Servicios realizados</div>';
+    for (var i = 0; i < acts.length; i++) {
+      h += '<div class="r-line"><span>· ' + escHtml(acts[i]) + '</span></div>';
+    }
+  }
+
+  h += '<div class="r-line" style="margin-top:8px"><span>Pago base ($' + (lc.cap || 0) + ' × ' + (lc.days || 1) + ' días)</span><span>$' + ((lc.dayPay || 0).toFixed(2)) + '</span></div>';
+  if (lc.bonusAmt > 0) {
+    h += '<div class="r-line"><span>Bono de desempeño</span><span>$' + lc.bonusAmt.toFixed(2) + '</span></div>';
+  }
+  h += '<div class="r-total"><span>TOTAL</span><span>$' + ((lc.total || 0).toFixed(2)) + '</span></div>';
+  h += '<div class="r-foot">Mayeli Gómez | Consultora de Empresas · procesoslumadigital@gmail.com<br>Documento de uso interno. No es un recibo fiscal.</div>';
+  h += '</div>';
+
+  var el = document.getElementById('receipt');
+  if (el) { el.innerHTML = h; window.print(); }
+}
+
+/* ── HISTORY ── */
+function renderHist() {
+  var filterEl = document.getElementById('histFilter');
+  var filter   = filterEl ? filterEl.value.trim().toLowerCase() : '';
+  var pays     = getPays();
+
+  var list = filter ? pays.filter(function(p) {
+    return p.worker && p.worker.toLowerCase().indexOf(filter) >= 0;
+  }) : pays;
+
+  var tbody   = document.getElementById('histBody');
+  var empty   = document.getElementById('histEmpty');
+  var summary = document.getElementById('histSummary');
+
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = '';
+    if (empty)   empty.style.display   = 'block';
+    if (summary) summary.textContent   = '';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  /* Compute YTD per worker across full history */
+  var ytdMap = {};
+  for (var i = 0; i < pays.length; i++) {
+    var w = pays[i].worker || '';
+    ytdMap[w] = (ytdMap[w] || 0) + (pays[i].total || 0);
+  }
+
+  var rows  = '';
+  var grand = 0;
+  for (var i = 0; i < list.length; i++) {
+    var p    = list[i];
+    var ytd  = ytdMap[p.worker] || 0;
+    var over = ytd >= THRESH_1099 ? ' ⚠️' : '';
+    grand += (p.total || 0);
+    rows += '<tr>';
+    rows += '<td style="white-space:nowrap">' + fmtDate(p.date) + '</td>';
+    rows += '<td><strong>' + escHtml(p.worker || '') + '</strong></td>';
+    rows += '<td><span class="chip' + (p.level === 'Novato' ? ' nov' : '') + '">' + (p.level || '') + '</span></td>';
+    rows += '<td style="text-align:center">' + (p.days || 1) + '</td>';
+    rows += '<td><strong>$' + ((p.total || 0).toFixed(2)) + '</strong></td>';
+    rows += '<td style="text-align:center">' + (p.itin ? '✓' : '—') + '</td>';
+    rows += '<td style="white-space:nowrap">$' + ytd.toFixed(2) + over + '</td>';
+    rows += '<td><button type="button" onclick="confirmDel(' + p.id + ')" style="background:none;border:none;color:var(--org);cursor:pointer;font-size:18px;padding:2px;touch-action:manipulation;line-height:1">✕</button></td>';
+    rows += '</tr>';
+  }
+  tbody.innerHTML = rows;
+
+  if (summary) {
+    summary.textContent = list.length + ' registro' + (list.length !== 1 ? 's' : '') + '  ·  Total filtrado: $' + grand.toFixed(2);
+  }
+}
+
+function confirmDel(id) {
+  if (confirm('¿Eliminar este registro de pago?')) {
+    delPay(id);
+    updateBadge();
+    renderHist();
+    showToast('Registro eliminado');
+  }
+}
+
+function updateBadge() {
+  var b = document.getElementById('badge');
+  if (b) b.textContent = getPays().length;
+}
+
+/* ── XLS EXPORT (Blob — iOS Safari compatible) ── */
+function exportXLS() {
+  if (typeof XLSX === 'undefined') {
+    showToast('⚠ SheetJS no cargó. Verifica internet.');
+    return;
+  }
+  var pays = getPays();
+  if (pays.length === 0) { showToast('No hay registros para exportar'); return; }
+
+  var wb = XLSX.utils.book_new();
+
+  /* Sheet 1 — Detail */
+  var hdr = ['Fecha','Nombre','Nivel','Días','Hrs/Día','Hrs Total','Pago Base','Bono','Total','ITIN','Servicios'];
+  var rows = [hdr];
+  for (var i = 0; i < pays.length; i++) {
+    var p = pays[i];
+    rows.push([
+      p.date     || '',
+      p.worker   || '',
+      p.level    || '',
+      p.days     || 1,
+      p.hrsPerDay|| 8.5,
+      p.totalHrs || 0,
+      p.dayPay   || 0,
+      p.bonusAmt || 0,
+      p.total    || 0,
+      p.itin ? 'Sí' : 'No',
+      (p.acts || []).join('; ')
+    ]);
+  }
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [
+    {wch:12},{wch:24},{wch:10},{wch:6},{wch:8},
+    {wch:9},{wch:12},{wch:10},{wch:12},{wch:6},{wch:55}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Pagos CALA');
+
+  /* Sheet 2 — Summary by worker */
+  var wMap = {};
+  for (var i = 0; i < pays.length; i++) {
+    var p = pays[i];
+    var wk = p.worker || 'Sin nombre';
+    if (!wMap[wk]) wMap[wk] = { count: 0, total: 0, itin: p.itin };
+    wMap[wk].count++;
+    wMap[wk].total += (p.total || 0);
+  }
+  var sRows = [['Ayudante','# Pagos','Total YTD','ITIN','Alerta 1099']];
+  for (var wk in wMap) {
+    var d = wMap[wk];
+    sRows.push([wk, d.count, d.total, d.itin ? 'Sí' : 'No', d.total >= THRESH_1099 ? '⚠ REVISAR' : 'OK']);
+  }
+  var ws2 = XLSX.utils.aoa_to_sheet(sRows);
+  ws2['!cols'] = [{wch:24},{wch:8},{wch:14},{wch:6},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen 2026');
+
+  /* iOS-compatible download via Blob */
+  try {
+    var out  = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    var blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'CALA_Pagos_' + isoToday() + '.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1500);
+    showToast('✓ Excel generado');
+  } catch (e) {
+    showToast('Error al exportar');
+  }
+}
+
+/* ── TOAST ── */
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() {
+    if (t) t.className = '';
+  }, 2600);
+}
+
+/* ── CRITERIA Q&A ── */
+function setQ(q, ans) {
+  qAns['q' + q] = ans;
+  var yBtn = document.getElementById('q' + q + 'y');
+  var nBtn = document.getElementById('q' + q + 'n');
+  if (yBtn) yBtn.className = 'qf-btn' + (ans === 'y' ? ' sel-exp' : '');
+  if (nBtn) nBtn.className = 'qf-btn' + (ans === 'n' ? ' sel-nov' : '');
+
+  if (qAns.q1 && qAns.q2 && qAns.q3) {
+    var yCount = (qAns.q1==='y'?1:0) + (qAns.q2==='y'?1:0) + (qAns.q3==='y'?1:0);
+    var res    = document.getElementById('criResult');
+    if (res) {
+      res.style.display = 'block';
+      if (yCount >= 2) {
+        res.style.cssText = 'display:block;border-radius:8px;padding:14px;font-size:15px;font-weight:700;text-align:center;background:var(--nav-light);color:var(--nav);border:2px solid var(--nav)';
+        res.textContent   = '✓ EXPERTO ($250/día) — ' + yCount + '/3 criterios cumplidos';
+      } else {
+        res.style.cssText = 'display:block;border-radius:8px;padding:14px;font-size:15px;font-weight:700;text-align:center;background:#FFF4EF;color:var(--org-text);border:2px solid var(--org)';
+        res.textContent   = '→ NOVATO ($160/día) — solo ' + yCount + '/3 criterios cumplidos';
+      }
+    }
+  }
+}
+
+/* ── INIT ── */
+(function init() {
+  var wd = document.getElementById('workDate');
+  if (wd) wd.value = isoToday();
+  buildActList();
+  setLevel('experto');
+  updateBadge();
+  calcAll();
+})();
+</script>
+</body>
+</html>
